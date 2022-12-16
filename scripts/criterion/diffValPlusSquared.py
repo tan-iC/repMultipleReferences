@@ -15,12 +15,11 @@ from omegaconf import II
 
 import torch
 
-
 @dataclass
-class MultiRefDiffValPlusLossConfig(FairseqDataclass):
+class MultiRefDiffValPlusSquaredLossConfig(FairseqDataclass):
     sentence_avg: bool = II("optimization.sentence_avg")
 
-@register_criterion("multi_ref_diff_val_plus_loss", dataclass=MultiRefDiffValPlusLossConfig)
+@register_criterion("multi_ref_diff_val_plus_squared_loss", dataclass=MultiRefDiffValPlusSquaredLossConfig)
 class MultiRefDiffValPlusLoss(FairseqCriterion):
     def __init__(self, task, sentence_avg):
         super().__init__(task)
@@ -415,9 +414,9 @@ class MultiRefDiffValPlusLoss(FairseqCriterion):
 
                 # 差の計算
                 ###
-                # abs((d_i * L_main) - L_sub)
+                # square((d_i * L_main) - L_sub)
                 ###
-                tmp_diff = torch.abs((torch.abs(main_LoD - sub_LoD + 1) * L_main) - L_sub)
+                tmp_diff = torch.square((torch.abs(main_LoD - sub_LoD + 1) * L_main) - L_sub)
                 
                 # 比の加算
                 if sum_diff == None:
