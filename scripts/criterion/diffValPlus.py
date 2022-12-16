@@ -415,9 +415,9 @@ class MultiRefDiffValPlusLoss(FairseqCriterion):
 
                 # 差の計算
                 ###
-                # abs((d_i * L_main) - L_sub)
+                # abs(((d_i + 1) * L_main) - L_sub)
                 ###
-                tmp_diff = torch.abs((torch.abs(main_LoD - sub_LoD + 1) * L_main) - L_sub)
+                tmp_diff = torch.abs(((torch.abs(main_LoD - sub_LoD) + 1) * L_main) - L_sub)
                 
                 # 比の加算
                 if sum_diff == None:
