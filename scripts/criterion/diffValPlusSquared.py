@@ -20,7 +20,7 @@ class MultiRefDiffValPlusSquaredLossConfig(FairseqDataclass):
     sentence_avg: bool = II("optimization.sentence_avg")
 
 @register_criterion("multi_ref_diff_val_plus_squared_loss", dataclass=MultiRefDiffValPlusSquaredLossConfig)
-class MultiRefDiffValPlusLoss(FairseqCriterion):
+class MultiRefDiffValPlusSquaredLoss(FairseqCriterion):
     def __init__(self, task, sentence_avg):
         super().__init__(task)
         self.sentence_avg = sentence_avg
