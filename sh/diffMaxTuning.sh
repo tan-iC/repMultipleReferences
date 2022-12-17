@@ -81,7 +81,7 @@ for alpha in "${alphas[@]}" ; do
         --source-lang src --target-lang tgt \
         --criterion-alpha "${alpha}" \
         --task add_args_translation \
-        --log-format json --log-file "log/${method}_${setting}_${alpha}.json" \
+        --log-format json --log-file "log/finetune/${method}_${setting}_${alpha}.json" \
         --finetune-from-model "${current}/checkpoint_best.pt" \
         --arch transformer --share-decoder-input-output-embed --activation-fn relu \
         --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 1.0 \
@@ -121,7 +121,7 @@ for alpha in "${alphas[@]}" ; do
         --beam 5 --lenpen 1.0 \
         --nbest 1 \
         --remove-bpe=sentencepiece \
-        --results-path "results/${method}/${setting}/${alpha}/val" \
+        --results-path "result/${method}/${setting}/${alpha}/val" \
         --fp16
 
     echo -e "\t${alpha} done `date "+%Y-%m-%d-%H-%M-%S"`" >> "${basepath}/README.txt"

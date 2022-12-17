@@ -15,12 +15,13 @@ from omegaconf import II
 
 import torch
 
+
 @dataclass
-class MultiRefDiffMaxLossConfig(FairseqDataclass):
+class MultiRefDiffValPlusSqrtLossConfig(FairseqDataclass):
     sentence_avg: bool = II("optimization.sentence_avg")
 
-@register_criterion("multi_ref_diff_max_loss", dataclass=MultiRefDiffMaxLossConfig)
-class MultiRefDiffMaxLoss(FairseqCriterion):
+@register_criterion("multi_ref_diff_val_plus_sqrt_loss", dataclass=MultiRefDiffValPlusSqrtLossConfig)
+class MultiRefDiffValPlusSqrtLoss(FairseqCriterion):
     def __init__(self, task, sentence_avg):
         super().__init__(task)
         self.sentence_avg = sentence_avg
@@ -414,15 +415,10 @@ class MultiRefDiffMaxLoss(FairseqCriterion):
 
                 # 差の計算
                 ###
-                # d_i * max((L_main - L_sub), 0)
+                # abs(((d_i + 1) * L_main) - L_sub)
                 ###
-                if (L_main - L_sub) > 0:
-                    tmp_diff = (torch.abs(main_LoD - sub_LoD) * (L_main - L_sub))
-                else:
-                    tmp_diff = (torch.abs(main_LoD - sub_LoD) * 0.0)
-
-                tmp_diff = tmp_diff.to(lprobs.device)
-
+                tmp_diff = torch.abs(((torch.abs(main_LoD - sub_LoD) + 1) * L_main) - L_sub)
+                
                 # 比の加算
                 if sum_diff == None:
                     sum_diff = tmp_diff
@@ -433,13 +429,6 @@ class MultiRefDiffMaxLoss(FairseqCriterion):
             # L_main + alpha * 1/n * sum(abs(d_i * L_main - L_sub)))
             ###
             tmp_loss = L_main + (alpha * (1 / sub_length) * sum_diff)
-
-            ###
-            # log
-            ###
-
-            # with open("/mntdir/tani/work/myFairseqScripts/repMultipleReferences/log/loss.log", mode="a") as f:
-            #     f.write(f'tmp_loss.grad_fn: {tmp_loss.grad_fn}')
 
             # 加算
             if loss == None:

@@ -4,34 +4,28 @@
 
 ###
 # cd repMultipleReferences
-# ./sh/diffValPlusTuning.sh
+# ./sh/diffValTuning.sh
 ###
 
 # method
-method="diffValPlus"
+method="diffMax"
 
 # dir_name
-setting="parameterTuning01"
+setting="test2"
+
+# feature
+feature="diffMax, dropout=0.0, valid=sentence_pair, vocab_size=32,000"
 
 # patience
 patience=5
 
-# feature
-feature="${method}, ${patience}, dropout=0.0, valid=sentence_pair, vocab_size=32,000"
-
 # alpha: hyper-parameter
 alphas=(
     0.0
-    0.5
-    1.0
-    5.0
-    7.5
-    10.0
-    12.5
 )
 
 # dst dir (preprocess)
-BIN_DATA="data/binarized/finetune/finetune32k"
+BIN_DATA="data/binarized/finetune/finetune32kLibra"
 
 ###
 # execute
@@ -72,27 +66,27 @@ for alpha in "${alphas[@]}" ; do
     echo -e "\t${alpha} start `date "+%Y-%m-%d-%H-%M-%S"`" >> "${basepath}/README.txt"
 
     current="${basepath}/${alpha}"
-    cp -r "${basepath}/template" "${current}"
+    # cp -r "${basepath}/template" "${current}"
 
-    # fine-tuning
-    CUDA_VISIBLE_DEVICES=0,1,2 fairseq-train \
-        $BIN_DATA/ \
-        --user-dir scripts \
-        --source-lang src --target-lang tgt \
-        --criterion-alpha "${alpha}" \
-        --task add_args_translation \
-        --log-format json --log-file "log/finetune/${method}_${setting}_${alpha}.json" \
-        --finetune-from-model "${current}/checkpoint_best.pt" \
-        --arch transformer --share-decoder-input-output-embed --activation-fn relu \
-        --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 1.0 \
-        --lr 7e-4 --lr-scheduler inverse_sqrt --warmup-updates 4000 --warmup-init-lr 1e-7 \
-        --weight-decay 0.0001 --dropout 0.0 \
-        --criterion multi_ref_diff_val_plus_loss \
-        --batch-size 200 --patience ${patience} \
-        --save-dir "${current}" \
-        --max-epoch 100 --keep-best-checkpoints 2 \
-        --bpe=sentencepiece \
-        --fp16
+    # # fine-tuning
+    # CUDA_VISIBLE_DEVICES=0,1,2 fairseq-train \
+    #     $BIN_DATA/ \
+    #     --user-dir scripts \
+    #     --source-lang src --target-lang tgt \
+    #     --criterion-alpha "${alpha}" \
+    #     --task add_args_translation \
+    #     --log-format json --log-file "log/finetune/${method}_${setting}_${alpha}.json" \
+    #     --finetune-from-model "${current}/checkpoint_best.pt" \
+    #     --arch transformer --share-decoder-input-output-embed --activation-fn relu \
+    #     --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 1.0 \
+    #     --lr 7e-4 --lr-scheduler inverse_sqrt --warmup-updates 4000 --warmup-init-lr 1e-7 \
+    #     --weight-decay 0.0001 --dropout 0.0 \
+    #     --criterion multi_ref_diff_max_loss \
+    #     --batch-size 200 --patience ${patience} \
+    #     --save-dir "${current}" \
+    #     --max-epoch 100 --keep-best-checkpoints 2 \
+    #     --bpe=sentencepiece \
+    #     --fp16
 
     # generate
     fairseq-generate \

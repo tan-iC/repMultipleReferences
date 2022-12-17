@@ -11,7 +11,7 @@
 method="diffVal"
 
 # dir_name
-setting="parameterTuning01"
+setting="parameterTuning02"
 
 # feature
 feature="diff, dropout=0.0, valid=sentence_pair, vocab_size=32,000"

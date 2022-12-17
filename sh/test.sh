@@ -11,7 +11,7 @@
 method="diffMax"
 
 # dir_name
-setting="test"
+setting="test2"
 
 # feature
 feature="diffMax, dropout=0.0, valid=sentence_pair, vocab_size=32,000"
@@ -21,11 +21,11 @@ patience=5
 
 # alpha: hyper-parameter
 alphas=(
-    0.0
+    1.0
 )
 
 # dst dir (preprocess)
-BIN_DATA="data/binarized/finetune/finetune32k"
+BIN_DATA="data/binarized/finetune/finetune32kLibra"
 
 ###
 # execute
@@ -89,34 +89,34 @@ for alpha in "${alphas[@]}" ; do
         --fp16
 
     # generate
-    # fairseq-generate \
-    #     $BIN_DATA/ \
-    #     --user-dir scripts \
-    #     --source-lang src --target-lang tgt \
-    #     --task add_args_translation \
-    #     --gen-subset test \
-    #     --path "${current}/checkpoint_best.pt" \
-    #     --max-len-a 1 --max-len-b 50 \
-    #     --beam 5 --lenpen 1.0 \
-    #     --nbest 1 \
-    #     --remove-bpe=sentencepiece \
-    #     --results-path "results/${method}/${setting}/${alpha}/test" \
-    #     --fp16
+    fairseq-generate \
+        $BIN_DATA/ \
+        --user-dir scripts \
+        --source-lang src --target-lang tgt \
+        --task add_args_translation \
+        --gen-subset test \
+        --path "${current}/checkpoint_best.pt" \
+        --max-len-a 1 --max-len-b 50 \
+        --beam 5 --lenpen 1.0 \
+        --nbest 1 \
+        --remove-bpe=sentencepiece \
+        --results-path "result/${method}/${setting}/${alpha}/test" \
+        --fp16
 
-    # # generate
-    # fairseq-generate \
-    #     $BIN_DATA/ \
-    #     --user-dir scripts \
-    #     --source-lang src --target-lang tgt \
-    #     --task add_args_translation \
-    #     --gen-subset valid \
-    #     --path "${current}/checkpoint_best.pt" \
-    #     --max-len-a 1 --max-len-b 50 \
-    #     --beam 5 --lenpen 1.0 \
-    #     --nbest 1 \
-    #     --remove-bpe=sentencepiece \
-    #     --results-path "results/${method}/${setting}/${alpha}/val" \
-    #     --fp16
+    # generate
+    fairseq-generate \
+        $BIN_DATA/ \
+        --user-dir scripts \
+        --source-lang src --target-lang tgt \
+        --task add_args_translation \
+        --gen-subset valid \
+        --path "${current}/checkpoint_best.pt" \
+        --max-len-a 1 --max-len-b 50 \
+        --beam 5 --lenpen 1.0 \
+        --nbest 1 \
+        --remove-bpe=sentencepiece \
+        --results-path "result/${method}/${setting}/${alpha}/val" \
+        --fp16
 
     echo -e "\t${alpha} done `date "+%Y-%m-%d-%H-%M-%S"`" >> "${basepath}/README.txt"
 

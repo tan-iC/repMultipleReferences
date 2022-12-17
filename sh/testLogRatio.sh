@@ -4,34 +4,29 @@
 
 ###
 # cd repMultipleReferences
-# ./sh/diffValPlusTuning.sh
+# ./sh/testLogRatio.sh
 ###
 
 # method
-method="diffValPlus"
+method="logRatio"
 
 # dir_name
-setting="parameterTuning01"
+setting="test3"
+
+# feature
+feature="logRatio, dropout=0.0, valid=sentence_pair, vocab_size=32,000"
 
 # patience
 patience=5
 
-# feature
-feature="${method}, ${patience}, dropout=0.0, valid=sentence_pair, vocab_size=32,000"
-
 # alpha: hyper-parameter
 alphas=(
     0.0
-    0.5
     1.0
-    5.0
-    7.5
-    10.0
-    12.5
 )
 
 # dst dir (preprocess)
-BIN_DATA="data/binarized/finetune/finetune32k"
+BIN_DATA="data/binarized/finetune/finetune32kLibra"
 
 ###
 # execute
@@ -87,7 +82,7 @@ for alpha in "${alphas[@]}" ; do
         --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 1.0 \
         --lr 7e-4 --lr-scheduler inverse_sqrt --warmup-updates 4000 --warmup-init-lr 1e-7 \
         --weight-decay 0.0001 --dropout 0.0 \
-        --criterion multi_ref_diff_val_plus_loss \
+        --criterion multi_ref_log_ratio_loss \
         --batch-size 200 --patience ${patience} \
         --save-dir "${current}" \
         --max-epoch 100 --keep-best-checkpoints 2 \
