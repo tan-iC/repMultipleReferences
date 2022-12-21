@@ -15,3 +15,9 @@ from .diffValPlus \
     import MultiRefDiffValPlusLoss
 from .diffValPlusSquared \
     import MultiRefDiffValPlusSquaredLoss
+from .orderPenalty \
+    import MultiRefOrderPenaltyLoss
+from .diffValPlusSqrt \
+    import MultiRefDiffValPlusSqrtLoss
+from .diffMaxSquared \
+    import MultiRefDiffMaxSquaredLoss

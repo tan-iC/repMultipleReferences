@@ -14,14 +14,14 @@ from fairseq.dataclass import FairseqDataclass
 from omegaconf import II
 
 import torch
-
+import  itertools               as it
 
 @dataclass
-class MultiRefDiffValPlusSqrtLossConfig(FairseqDataclass):
+class MultiRefOrderPenaltyLossConfig(FairseqDataclass):
     sentence_avg: bool = II("optimization.sentence_avg")
 
-@register_criterion("multi_ref_diff_val_plus_sqrt_loss", dataclass=MultiRefDiffValPlusSqrtLossConfig)
-class MultiRefDiffValPlusSqrtLoss(FairseqCriterion):
+@register_criterion("multi_ref_order_penalty_loss", dataclass=MultiRefOrderPenaltyLossConfig)
+class MultiRefOrderPenaltyLoss(FairseqCriterion):
     def __init__(self, task, sentence_avg):
         super().__init__(task)
         self.sentence_avg = sentence_avg
@@ -356,6 +356,41 @@ class MultiRefDiffValPlusSqrtLoss(FairseqCriterion):
 
         return additional, sample
 
+    ###
+    ###
+    ###
+    def make_dict(self, keys, vals):
+        "2つのリストからkey,valueの型に依らずディクショナリを作成する"
+        d = {k : v for (k, v) in zip(keys, vals)}
+        return d
+
+    ###
+    ###
+    ###
+    def make_combination(self, LoDs, losses, main_LoD):
+        "List[dict]の形式で条件を満たす難易度とlossの組合せを返す"
+
+        # 難易度の数値をkey、lossをvalueとする辞書を作成
+        LoD2loss = self.make_dict(LoDs, losses)
+
+        # すべての難易度から仮の組合せを作成する
+        tmp_combination = it.combinations(LoDs, 2)
+
+        # 条件を満たす組合わせを残す
+        tmp = []
+        for comb in tmp_combination:
+            i = comb[0]
+            j = comb[1]
+
+            if ((main_LoD - i)*(main_LoD - j) >= 0) and (i < j):
+                d = {
+                    "LoD" : [i, j],
+                    "loss" : [LoD2loss[i], LoD2loss[j]]
+                }
+                tmp.append(d)
+        return tmp
+
+
     def my_loss_loop_01(
         self,
         lprobs,
@@ -396,6 +431,10 @@ class MultiRefDiffValPlusSqrtLoss(FairseqCriterion):
                         reduction="sum",
                     )
 
+            # 計算に用いる要素を格納するリスト
+            losses  = [L_main]
+            LoDs    = [main_LoD]
+
             sum_diff    = None
             sub_length  = len(sub_LoDs_set)
 
@@ -413,27 +452,37 @@ class MultiRefDiffValPlusSqrtLoss(FairseqCriterion):
                         reduction="sum",
                     )
 
-                # 差の計算
-                ###
-                # abs( (sqrt(d_i + 1) * L_main) - L_sub)
-                ###
-                tmp_diff = torch.abs( (torch.sqrt(torch.abs(main_LoD - sub_LoD) + 1) * L_main) - L_sub)
-                
-                # 比の加算
-                if sum_diff == None:
-                    sum_diff = tmp_diff
-                else:
-                    sum_diff+= tmp_diff
+                # 計算に用いる要素をそれぞれ追加
+                losses.append(L_sub)
+                LoDs.append(sub_LoD)
+            
+            # 計算が必要な組合せの辞書のリストを作成
+            comb_dicts = self.make_combination(LoDs, losses, main_LoD)
 
-            ###
-            # L_main + alpha * 1/n * sum(abs(d_i * L_main - L_sub)))
-            ###
-            tmp_loss = L_main + (alpha * (1 / sub_length) * sum_diff)
+
+            tmp = torch.tensor(0.0, device=lprobs.device)
+
+            for comb_dict in comb_dicts:
+
+                # 辞書から計算に利用する要素を取り出す
+                L_sub_i = comb_dict["loss"][0]
+                L_sub_j = comb_dict["loss"][1]
+                sub_LoD_i = comb_dict["LoD"][0]
+
+                # penaltyの計算
+                penalty = torch.tensor(0.0, device=lprobs.device)
+
+                if (L_sub_i - L_sub_j) * (main_LoD - sub_LoD_i) < 0:
+                    penalty = F.huber_loss(L_sub_i, L_sub_j)
+                
+                    # 加算
+                    tmp += penalty
+
 
             # 加算
             if loss == None:
-                loss = tmp_loss
+                loss = L_main + alpha * tmp
             else:
-                loss+=tmp_loss
-                        
+                loss+= L_main + alpha * tmp
+
         return loss

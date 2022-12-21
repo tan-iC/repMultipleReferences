@@ -11,7 +11,7 @@
 method="diffMax"
 
 # dir_name
-setting="parameterTuning01"
+setting="parameterTuning02"
 
 # patience
 patience=5
@@ -106,7 +106,7 @@ for alpha in "${alphas[@]}" ; do
         --beam 5 --lenpen 1.0 \
         --nbest 1 \
         --remove-bpe=sentencepiece \
-        --results-path "results/${method}/${setting}/${alpha}/test" \
+        --results-path "result/${method}/${setting}/${alpha}/test" \
         --fp16
 
     # generate
