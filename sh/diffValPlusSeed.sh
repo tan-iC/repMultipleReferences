@@ -4,29 +4,33 @@
 
 ###
 # cd repMultipleReferences
-# ./sh/diffValPlusSqrtTuning.sh
+# ./sh/diffValPlusSeed.sh
 ###
 
 # method
-method="diffValPlusSqrt"
+method="diffValPlusSeed"
 
 # dir_name
-setting="parameterTuning"
-
-# feature
-feature="diffValPlusSqrt, dropout=0.0, valid=sentence_pair, vocab_size=32,000"
+setting="seed"
 
 # patience
 patience=2
 
+# alpha
+alpha=7.5
+
+# feature
+feature="${method}, ${patience}, ${alpha}, dropout=0.0, valid=sentence_pair, vocab_size=32,000"
+
 # alpha: hyper-parameter
-alphas=(
-    0.0
-    0.5
-    1.0
-    5.0
-    7.5
-    10.0
+# alphas=(
+#     0.75
+#     1.25
+#     0.25
+# )
+seeds=(
+    2
+    3
 )
 
 # dst dir (preprocess)
@@ -67,10 +71,14 @@ cp "data/checkpoints/pretrain/checkpoint_best.pt" "${basepath}/template/"
 #         --workers 8
 
 
-for alpha in "${alphas[@]}" ; do
-    echo -e "\t${alpha} start `date "+%Y-%m-%d-%H-%M-%S"`" >> "${basepath}/README.txt"
+# for alpha in "${alphas[@]}" ; do
+#     echo -e "\t${alpha} start `date "+%Y-%m-%d-%H-%M-%S"`" >> "${basepath}/README.txt"
+for seed in "${seeds[@]}" ; do
+    echo -e "\t${seed} start `date "+%Y-%m-%d-%H-%M-%S"`" >> "${basepath}/README.txt"
 
-    current="${basepath}/${alpha}"
+    current="${basepath}/${alpha}_${seed}"
+
+    echo $current
     cp -r "${basepath}/template" "${current}"
 
     # fine-tuning
@@ -79,14 +87,15 @@ for alpha in "${alphas[@]}" ; do
         --user-dir scripts \
         --source-lang src --target-lang tgt \
         --criterion-alpha "${alpha}" \
+        --seed "${seed}" \
         --task add_args_translation \
-        --log-format json --log-file "log/finetune/${method}_${setting}_${alpha}.json" \
+        --log-format json --log-file "log/finetune/${method}_${setting}_${alpha}_${seed}.json" \
         --finetune-from-model "${current}/checkpoint_best.pt" \
         --arch transformer --share-decoder-input-output-embed --activation-fn relu \
         --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 1.0 \
         --lr 7e-4 --lr-scheduler inverse_sqrt --warmup-updates 4000 --warmup-init-lr 1e-7 \
         --weight-decay 0.0001 --dropout 0.0 \
-        --criterion multi_ref_diff_val_plus_sqrt_loss \
+        --criterion multi_ref_diff_max_squared_loss \
         --batch-size 200 --patience ${patience} \
         --save-dir "${current}" \
         --max-epoch 100 --keep-best-checkpoints 2 \
@@ -98,6 +107,7 @@ for alpha in "${alphas[@]}" ; do
         $BIN_DATA/ \
         --user-dir scripts \
         --source-lang src --target-lang tgt \
+        --seed "${seed}" \
         --task add_args_translation \
         --gen-subset test \
         --path "${current}/checkpoint_best.pt" \
@@ -105,7 +115,7 @@ for alpha in "${alphas[@]}" ; do
         --beam 5 --lenpen 1.0 \
         --nbest 1 \
         --remove-bpe=sentencepiece \
-        --results-path "result/${method}/${setting}/${alpha}/test" \
+        --results-path "result/${method}/${setting}/${alpha}_${seed}/test" \
         --fp16
 
     # generate
@@ -113,6 +123,7 @@ for alpha in "${alphas[@]}" ; do
         $BIN_DATA/ \
         --user-dir scripts \
         --source-lang src --target-lang tgt \
+        --seed "${seed}" \
         --task add_args_translation \
         --gen-subset valid \
         --path "${current}/checkpoint_best.pt" \
@@ -120,10 +131,11 @@ for alpha in "${alphas[@]}" ; do
         --beam 5 --lenpen 1.0 \
         --nbest 1 \
         --remove-bpe=sentencepiece \
-        --results-path "result/${method}/${setting}/${alpha}/val" \
+        --results-path "result/${method}/${setting}/${alpha}_${seed}/val" \
         --fp16
 
-    echo -e "\t${alpha} done `date "+%Y-%m-%d-%H-%M-%S"`" >> "${basepath}/README.txt"
+    # echo -e "\t${alpha} done `date "+%Y-%m-%d-%H-%M-%S"`" >> "${basepath}/README.txt"
+    echo -e "\t${seed} done `date "+%Y-%m-%d-%H-%M-%S"`" >> "${basepath}/README.txt"
 
 done
 

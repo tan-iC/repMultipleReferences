@@ -30,7 +30,7 @@ alphas=(
 )
 
 # dst dir (preprocess)
-BIN_DATA="data/binarized/finetune/finetune32k"
+BIN_DATA="data/binarized/finetune/finetune32kLibra"
 
 ###
 # execute
