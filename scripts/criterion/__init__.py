@@ -25,3 +25,5 @@ from .diffPlusSqrtSquared \
     import MultiRefDiffPlusSqrtSquaredLoss
 from .diffCompSquaredMax \
     import MultiRefDiffCompSquaredMaxLoss
+from .diffRatioSquaredMax \
+    import MultiRefDiffRatioSquaredMaxLoss
