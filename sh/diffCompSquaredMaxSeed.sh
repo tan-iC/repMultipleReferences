@@ -17,7 +17,7 @@ setting="seed"
 patience=10
 
 # alpha
-alpha=5.0
+alpha=4.5
 
 # feature
 feature="${method}, ${patience}, ${alpha}, dropout=0.0, valid=sentence_pair, vocab_size=32,000"
@@ -29,9 +29,9 @@ feature="${method}, ${patience}, ${alpha}, dropout=0.0, valid=sentence_pair, voc
 #     0.25
 # )
 seeds=(
-    1
     2
     3
+    1
     4
 )
 

@@ -21,12 +21,8 @@ feature="${method}, ${patience}, ${patience}, dropout=0.0, valid=sentence_pair, 
 
 # alpha: hyper-parameter
 alphas=(
-    0.0
-    1.0
-    0.5
-    5.0
-    7.5
-    10.0
+    2.5
+    4.5
 )
 
 # dst dir (preprocess)
