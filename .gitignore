@@ -5,3 +5,5 @@ __pycache__
 log/*
 results/*
 result/*
+total32k/data/*
+total32k/log/*
