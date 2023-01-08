@@ -4,14 +4,14 @@
 
 ###
 # cd repMultipleReferences
-# ./sh/diffMaxSquaredTuning2.sh
+# ./sh/diffMaxSquaredTuningTotal32k.sh
 ###
 
 # method
 method="diffMaxSquared"
 
 # dir_name
-setting="parameterTuning04"
+setting="parameterTuning01"
 
 # patience
 patience=2
@@ -21,29 +21,21 @@ feature="${method}, ${patience}, dropout=0.0, valid=sentence_pair, vocab_size=32
 
 # alpha: hyper-parameter
 alphas=(
-    0.9
-    1.1
+    0.0
+    0.5
+    1.0
+    5.0
+    2.5
+    7.5
 )
-# alphas=(
-#     50.0
-#     100.0
-#     75.0
-# )
-# alphas=(
-#     37.5
-#     62.5
-#     87.5
-#     125.0
-#     200.0
-# )
 
 # dst dir (preprocess)
-BIN_DATA="data/binarized/finetune/finetune32k"
+BIN_DATA="total32k/data/binarized/finetune"
 
 ###
 # execute
 ###
-cp_path="data/checkpoints"
+cp_path="total32k/data/checkpoints/finetune"
 basepath="${cp_path}/${method}"
 mkdir "${basepath}"
 

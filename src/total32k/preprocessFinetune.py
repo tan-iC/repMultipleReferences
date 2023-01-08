@@ -1,7 +1,5 @@
-
-import  sentencepiece as spm
-from    tqdm import tqdm
-# from    
+from    preprocess\
+    import preprocessSentences, preprocessTaggedSentences, preprocessSetSentences
 
 
 ###
@@ -16,25 +14,24 @@ jaModelPath = "data/spm/ja32k.model"
 total32kModelPath = 'total32k/data/spm/total32k.model'
 
 # pretrain src/dst path
-baseSrcPath = 'data/prepared/pretrain'
-baseDstPath = 'total32k/data/prepared/pretrain'
+baseSrcPath = 'data/prepared/finetune'
+baseDstPath = 'total32k/data/prepared/finetune'
 
-# combined en/ja text
+# set src/tgt text
 setSrcPaths = [
-    'data/combined/train.en',
-    'data/combined/train.ja'
+    'data/prepared/finetune/setData/train.src',
+    'data/prepared/finetune/setData/train.tgt'
 ]
 
 setDstPaths = [
-    'total32k/data/prepared/combined/train.en',
-    'total32k/data/prepared/combined/train.ja'
+    'total32k/data/prepared/finetune/setData/train.src',
+    'total32k/data/prepared/finetune/setData/train.tgt'
 ]
 
 # types
 textTypes = [
     "dev",
-    "test",
-    "train"
+    "test"
 ]
 
 # languages
@@ -45,138 +42,9 @@ langs = [
 
 # model paths
 decodeModelPaths = [
-    enModelPath,
-    jaModelPath
+    jaModelPath,
+    enModelPath
 ]
-
-
-# 
-def decodeTaggedSentences(text : str, model):
-    """
-    input
-        - text : str, encoded text
-        - model : , spm model
-
-    output
-        - decoded text
-    """
-
-    decodedText = ""
-    lines = text.strip().splitlines()
-    for line in tqdm(lines):            
-        # split: by space
-        tokens   = line.strip().split()
-
-        # decode: sentence
-        sentence = model.DecodePieces(tokens)
-
-        decodedText += sentence.strip() + '\n'
-
-    return decodedText.strip()
-
-# 
-def encodeTaggedSentences(text : str, model):
-    """
-    input
-        - text : str, encoded text
-        - model : , spm model
-
-    output
-        - encoded text
-    """
-
-    encodedText = ""
-    lines = text.strip().splitlines()
-    for line in tqdm(lines):            
-
-        # encode: line
-        tokens = model.EncodeAsPieces(line.strip())
-        sentence = " ".join(tokens)
-        encodedText += sentence.strip() + '\n'
-
-    return encodedText.strip()
-
-
-# 
-def preprocessTaggedSentences(srcPath, decodeModelPath, encodeModelPath):
-    """
-    read text, load spm model and decode
-
-    input
-        - srcPath : str, src text path
-        - modelPath: str, spm model path
-    """
-    with open(srcPath, mode="r") as f:
-        srcText = f.read()
-
-    ###
-    # decode
-    ###
-    decodeModel = spm.SentencePieceProcessor()
-    decodeModel.Load(decodeModelPath)
-    print(f'{decodeModelPath} vocab size: {decodeModel.GetPieceSize()}')
-
-    decoded = decodeTaggedSentences(srcText, decodeModel)
-
-    ###
-    # encode
-    ###
-    encodeModel = spm.SentencePieceProcessor()
-    encodeModel.Load(encodeModelPath)
-    print(f'{encodeModelPath} vocab size: {encodeModel.GetPieceSize()}')
-
-    encoded = encodeTaggedSentences(decoded, encodeModel)
-
-    return encoded
-
-
-#
-def decodeSetSentences(srcLines, tgtLines, srcModel, tgtModel, sepToken="<sep>"):
-    """
-    srcLines: List[str]
-    tgtLines: List[str]
-    srcModel: spm
-    tgtModel: spm
-    """
-    
-    srcOutputTextWspToken = ""
-    srcOutputText   = ""
-    tgtOutputText   = ""
-    exSrcSentence   = ""
-
-    for (srcLine, tgtLine) in tqdm(zip(srcLines, tgtLines)):
-
-        # split by space
-        srcTokens   = srcLine.strip().split()
-
-        # decode: src sentence
-        srcSpToken  = srcTokens[0]
-        srcSentence = srcModel.DecodePieces(srcTokens[1:])
-
-        # different set
-        if exSrcSentence != srcSentence:
-
-            # split by <sep> token
-            tgtTokensSet = tgtLine.strip().split(sepToken)
-
-            for tgtTokens in tgtTokensSet:
-
-                # split by space
-                tgtTokens   = tgtTokens.strip().split()
-
-                # decode tgt sentence
-                tgtSpToken  = tgtTokens[0]
-                tgtSentence = tgtModel.DecodePieces(tgtTokens[1:])
-
-                # output
-                srcOutputTextWspToken += f"{tgtSpToken} {srcSentence}\n"
-                srcOutputText += f"{srcSentence}\n"
-                tgtOutputText += f"{tgtSentence}\n"
-        
-        # swap
-        exSrcSentence = srcSentence
-
-    return srcOutputTextWspToken, srcOutputText, tgtOutputText
 
 
 ###
@@ -193,12 +61,21 @@ if __name__ == "__main__":
             ###
             print(f"{textType}.{lang} preprocessing ...")
             currentSrcPath = f"{baseSrcPath}/{textType}.{lang}"
-            encoded = preprocessFinetune(
-                currentSrcPath,
-                decodeModelPath,
-                total32kModelPath
-                )
 
+            if lang == langs[0]:
+                # src : tagged sentence
+                encoded = preprocessTaggedSentences(
+                    currentSrcPath,
+                    decodeModelPath,
+                    total32kModelPath
+                    )
+            else:
+                # tgt : sentence
+                encoded = preprocessSentences(
+                    currentSrcPath,
+                    decodeModelPath,
+                    total32kModelPath
+                    )
 
             ###
             # write
@@ -207,3 +84,27 @@ if __name__ == "__main__":
             currentDstPath = f"{baseDstPath}/{textType}.{lang}"
             with open(currentDstPath, mode="w") as f:
                 f.write(encoded)
+
+    ###
+    # preprocess set data
+    ###
+    print(f"{setSrcPaths[0]}, {setSrcPaths[1]} preprocessing ...")
+    encodedSrc, encodedTgt =\
+        preprocessSetSentences(
+            setSrcPaths[0], 
+            setSrcPaths[1], 
+            decodeModelPaths[0], 
+            decodeModelPaths[1],
+            total32kModelPath
+            )
+
+    ###
+    # write
+    ###
+    print("writing ...")
+    with open(setDstPaths[0], mode="w") as f:
+        f.write(encodedSrc)
+
+    print("writing ...")
+    with open(setDstPaths[1], mode="w") as f:
+        f.write(encodedTgt)
