@@ -28,18 +28,6 @@ alphas=(
     10.0
     12.5
 )
-# alphas=(
-#     50.0
-#     100.0
-#     75.0
-# )
-# alphas=(
-#     37.5
-#     62.5
-#     87.5
-#     125.0
-#     200.0
-# )
 
 # dst dir (preprocess)
 BIN_DATA="data/binarized/finetune/finetune32k"
